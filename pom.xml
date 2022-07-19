@@ -78,6 +78,13 @@
 			<artifactId>postgresql</artifactId>
 			<version>42.2.2</version>
 		</dependency>
+		<dependency>
+			<groupId>54837c00-ed88-479d-8789-0d41fd4fa01f</groupId>
+			<artifactId>studentudemy</artifactId>
+			<version>1.0.2</version>
+			<classifier>raml</classifier>
+			<type>zip</type>
+		</dependency>
 	</dependencies>
 
 	<repositories>

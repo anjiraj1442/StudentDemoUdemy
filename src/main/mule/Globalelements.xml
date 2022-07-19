@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="c1f7195a-eba8-4c39-818a-fde3572b84f6" >
+		<db:generic-connection url="jdbc:postgresql://35.193.33.226/students" driverClassName="org.postgresql.Driver" user="novigo" password="Novigo@123" />
+	</db:config>
+	    <http:listener-config name="studentapi-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="4001" />
+    </http:listener-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="d17c8aad-43f2-44ea-b088-5208135ab6a3" file="config.yaml" />
+	
+</mule>

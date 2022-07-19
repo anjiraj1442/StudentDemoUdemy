@@ -4,14 +4,18 @@
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
-	<db:config name="Database_Config" doc:name="Database Config" doc:id="3c7eb845-01d4-46f5-9712-044318c11833" >
-		<db:generic-connection url="jdbc:postgresql://35.193.33.226/students" driverClassName="org.postgresql.Driver" user="novigo" password="Novigo@123" />
-	</db:config>
+	
 	<flow name="databaseFlow" doc:id="7034ddcf-a79b-4377-8dda-6233865ee826" >
 		<db:insert doc:name="RecordsInsert" doc:id="424cfa50-7f3e-442b-b777-de4ba92e4e12" config-ref="Database_Config">
 			<db:sql ><![CDATA[INSERT INTO studentDemo VALUES (:name, :surname, :age, :city);]]></db:sql>
 			<db:input-parameters ><![CDATA[#[{'name' : payload.name , 'surname': payload.surname , 'age': payload.age , 'city': payload.city}]]]></db:input-parameters>
 		</db:insert>
 		<set-payload value="records created" doc:name="Set Payload" doc:id="d6b217c8-e297-4964-88a3-a88d0b787c56" />
+	</flow>
+	<flow name="getdetailsflow" doc:id="ad3acd36-c7f2-4e77-a2d9-e2ec2616f3c4">
+		<db:select doc:name="Select" doc:id="0618e954-2c40-4cce-85dc-236988139611" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT * FROM studentDemo]]></db:sql>
+		</db:select>
+		<set-payload value="getting all records" doc:name="Set Payload" doc:id="e909b5ea-91cf-493e-9dd7-c691c512a043" />
 	</flow>
 </mule>
