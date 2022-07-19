@@ -1,0 +1,67 @@
+#%RAML 1.0
+title: StudentAPI
+description: This API provides three interfaces to create student record in the system
+
+types: 
+  Student: !include StudentdataType.raml
+
+
+
+/student:
+  post:
+    body:
+      application/json:
+        type: Student
+    responses:
+      201:
+        body:
+          application/json:
+            example:
+              {message: " User created"}
+  get:
+    queryParameters:
+      name:
+        type: string
+        required: true
+      surname:
+        type: string
+        required: false
+    responses:
+      200:
+        body:
+          application/json:
+            type: Student
+            example:
+              name: "Mahesh"
+              surname: "Rane"
+              age: 21
+              city: "Pune"
+  delete:
+    queryParameters:
+          name:
+            type: string
+            required: true
+          surname:
+            type: string
+            required: false
+    responses:
+      201:
+        body:
+          application/json:
+            example:
+              {message: " User deleted"}
+  put:
+    body:
+      application/json:
+        type: Student
+    responses:
+      200:
+        body:
+          application/json:
+            example:
+              {"message" : "User updated"}
+        
+        
+
+      
+      

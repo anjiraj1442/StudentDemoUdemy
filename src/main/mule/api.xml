@@ -1,0 +1,416 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
+    <http:listener-config name="api-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="8082" />
+    </http:listener-config>
+    <apikit:config name="api-config" api="resource::org.mule.examples:plaid-api:1.0.1:raml:zip:api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <flow name="api-main">
+        <http:listener config-ref="api-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="api-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="api-console">
+        <http:listener config-ref="api-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="api-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="get:\users\(user_id):api-config">
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="user_id">attributes.uriParams.'user_id'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  identities: [
+    {
+      id: "cdb6c2cc-0a8a-413b-bafd-a372dd210447",
+      name: "Jane Doe",
+      email: "jane@plaid.com",
+      mailing_address: {
+        lines: [
+          "1098 Harrison St", 
+          "Unit 100"
+        ],
+        city: "San Francisco",
+        region: "CA",
+        country: "US",
+        postal_code: "94103",
+        phone: "+1 415 555 1212"
+      },
+      person: {
+        first_name: "Jane",
+        middle_name: "Joan",
+        last_name: "Doe",
+        date_of_birth: "1987-01-31"
+      }
+    }, 
+    {
+      id: "c9c019d6-3c77-4cde-b69f-91d58720117e",
+      name: "John Doe",
+      email: "john@plaid.com"
+    }
+  ],
+  user_identity_id: "cdb6c2cc-0a8a-413b-bafd-a372dd210447",
+  securities: [
+    {
+      id: "12938f03-f7e5-4fe7-9658-2e133b7d7254",
+      isin: "US17275R1023",
+      name: "CISCO SYSTEMS INC",
+      symbol: "CSCO",
+      is_cash_equivalent: false,
+      current_price: "41.98",
+      current_as_of: "2020-04-16T05:54:37+0000",
+      close_price: "41.95",
+      "type": "equity",
+      currency: "USD"
+    }
+  ],
+  accounts: [
+    {
+      id: "31d7d668-2978-411a-8146-5975e1fc3a73",
+      "type": "depository",
+      subtype: "checking",
+      last_activity_at: "2020-04-17",
+      ownership_type: "joint",
+      owner_identity_ids: [
+        "cdb6c2cc-0a8a-413b-bafd-a372dd210447", 
+        "c9c019d6-3c77-4cde-b69f-91d58720117e"
+      ],
+      status: "active",
+      name: "Checking",
+      official_name: "Pro Checking",
+      display_mask: "5678",
+      opening_date: "2018-01-31",
+      current_balance: "1501.85",
+      available_balance: "1300.50",
+      tax_advantaged: false,
+      currency: "USD",
+      interest_rate: "0.0247",
+      transfer_codes: {
+        ach: {
+          account_number: "12345678",
+          routing_number: "031176110",
+          supports_credit: true,
+          supports_debit: true
+        }
+      }
+    }, 
+    {
+      id: "f8df4965-5c6b-42bf-9219-c4f388054b45",
+      "type": "loan",
+      subtype: "credit card",
+      last_activity_at: "2020-04-17",
+      ownership_type: "individual",
+      owner_identity_ids: [
+        "cdb6c2cc-0a8a-413b-bafd-a372dd210447"
+      ],
+      status: "active",
+      name: "Credit Card",
+      official_name: "Platinum Rewards Credit Card",
+      display_mask: "7890",
+      opening_date: "2019-05-01",
+      current_balance: "788.51",
+      available_balance: "11211.49",
+      currency: "USD",
+      reward_balance: "1200.00",
+      credit_limit: "12000",
+      spender_identity_ids: [
+        "c9c019d6-3c77-4cde-b69f-91d58720117e"
+      ],
+      interest_rates: [
+        {
+          start_date: "2019-05-01",
+          end_date: "2020-04-17",
+          "type": "purchase",
+          interest_rate: "0.2399",
+          subject_balance: "788.51",
+          interest_charged: "0.00"
+        }
+      ],
+      reward_currency: "USD"
+    }, 
+    {
+      id: "98d7a645-04d6-4150-833c-1dd3c7785383",
+      "type": "investment",
+      subtype: "brokerage",
+      ownership_type: "individual",
+      owner_identity_ids: [
+        "cdb6c2cc-0a8a-413b-bafd-a372dd210447"
+      ],
+      non_owner_identity_ids: [
+        "c9c019d6-3c77-4cde-b69f-91d58720117e"
+      ],
+      status: "active",
+      name: "Investments",
+      official_name: "Individual Brokerage",
+      display_mask: "4321",
+      opening_date: "2019-05-01",
+      current_balance: "67900.73",
+      available_balance: "67900.73",
+      tax_advantaged: false,
+      currency: "USD",
+      transfer_codes: {
+        acats: {
+          account_number: "987654321",
+          receiving_member_identity: {
+            id: "cdb6c2cc-0a8a-413b-bafd-a372dd210447",
+            name: "Jane Doe",
+            email: "jane@plaid.com",
+            mailing_address: {
+              lines: [
+                "1098 Harrison St", 
+                "Unit 100"
+              ],
+              city: "San Francisco",
+              region: "CA",
+              country: "US",
+              postal_code: "94103",
+              phone: "+1 415 555 1212"
+            },
+            person: {
+              first_name: "Jane",
+              middle_name: "Joan",
+              last_name: "Doe",
+              date_of_birth: "1987-01-31"
+            }
+          },
+          dtcc_clearing_ids: [
+            "0226"
+          ]
+        }
+      },
+      current_as_of: "2020-04-17",
+      holdings: [
+        {
+          security_id: "12938f03-f7e5-4fe7-9658-2e133b7d7254",
+          quantity: "100",
+          currency: "USD"
+        }
+      ]
+    }
+  ]
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="get:\users\(user_id)\transactions:api-config">
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="user_id">attributes.uriParams.'user_id'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  total: 1,
+  transactions: [
+    {
+      id: "OJZMs3wQFwj0UOA6",
+      account_id: "31d7d668-2978-411a-8146-5975e1fc3a73",
+      description: "Purchase CVS Pharmacy #10423",
+      category: [
+        "Medical", 
+        "Pharmacy"
+      ],
+      ending_balance: "801.50",
+      transacted_at: "2020-04-15",
+      settled_at: "2020-04-17",
+      currency: "USD",
+      "type": "purchase",
+      pending: false,
+      amount: "12.50",
+      method: "card_present"
+    }
+  ]
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="post:\users\auth_token:application\x-www-form-urlencoded:api-config">
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  user_id: "YRQ8PPaohJ",
+  challenge: {
+    id: "1d1c327d-b8f0-43e5-8c62-cb94faa364a7",
+    "type": "kba",
+    questions: [
+      {
+        id: "09be1eb5-1295-4f5f-98f5-8cd96b0506c5",
+        text: "What is your mother's maiden name?"
+      }
+    ]
+  }
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="post:\users\(user_id)\2fa:application\x-www-form-urlencoded:api-config">
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="user_id">attributes.uriParams.'user_id'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  user_id: "YRQ8PPaohJ",
+  challenge: {
+    id: "1d1c327d-b8f0-43e5-8c62-cb94faa364a7",
+    "type": "kba",
+    questions: [
+      {
+        id: "09be1eb5-1295-4f5f-98f5-8cd96b0506c5",
+        text: "What is your mother's maiden name?"
+      }
+    ]
+  }
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="post:\users\(user_id)\sendOtp:application\x-www-form-urlencoded:api-config">
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="user_id">attributes.uriParams.'user_id'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  request_id: "m8MDnv9okwxFNBV",
+  error: {
+    id: "E00001",
+    message: "We're unable to retrieve your accounts."
+  }
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+</mule>
