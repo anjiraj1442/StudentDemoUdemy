@@ -13,6 +13,6 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
 	    <http:listener-config name="studentapi-httpListenerConfig">
         <http:listener-connection host="${http.host}" port="${http.port}" />
     </http:listener-config>
-	<configuration-properties doc:name="Configuration properties" doc:id="d17c8aad-43f2-44ea-b088-5208135ab6a3" file="config.yaml" />
+	<configuration-properties doc:name="Configuration properties" doc:id="d17c8aad-43f2-44ea-b088-5208135ab6a3" file="config.properties" />
 	
 </mule>
